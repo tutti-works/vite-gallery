@@ -110,7 +110,7 @@ const DebugInfo = ({ inputState, playerPosition, isMobile }) => {
     <div style={{
       position: 'fixed',
       top: '10px',
-      left: '10px',
+      left: '50px',
       backgroundColor: 'rgba(0, 0, 0, 0.8)',
       color: 'white',
       padding: '10px',

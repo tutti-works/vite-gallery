@@ -149,7 +149,7 @@ const CameraController = ({
         rotateDelta.current.multiplyScalar(ROTATE_SPEED / gl.domElement.clientHeight);
         
         spherical.current.theta -= rotateDelta.current.x * 2; // モバイルでは少し感度を上げる
-        spherical.current.phi += rotateDelta.current.y * 2;
+        spherical.current.phi -= rotateDelta.current.y * 2;
         
         // 角度制限
         spherical.current.phi = Math.max(MIN_POLAR_ANGLE, Math.min(MAX_POLAR_ANGLE, spherical.current.phi));

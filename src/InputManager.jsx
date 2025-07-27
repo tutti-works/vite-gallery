@@ -210,14 +210,14 @@ export const VirtualJoystick = ({ onMove, onJump, isMobile }) => {
       <div style={{
         position: 'fixed',
         bottom: '20px',
-        left: '20px',
+        left: '60px',
         zIndex: 1000
       }}>
         <div
           ref={joystickRef}
           style={{
-            width: '100px',
-            height: '100px',
+            width: '120px',
+            height: '120px',
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
             border: '3px solid rgba(255, 255, 255, 0.8)',
             borderRadius: '50%',
@@ -261,7 +261,7 @@ export const VirtualJoystick = ({ onMove, onJump, isMobile }) => {
       <div style={{
         position: 'fixed',
         bottom: '20px',
-        right: '20px',
+        right: '60px',
         zIndex: 1000
       }}>
         <button

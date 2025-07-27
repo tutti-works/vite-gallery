@@ -3,8 +3,41 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <title>Vite + React</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html, body {
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        -webkit-text-size-adjust: 100%;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      #root {
+        height: 100%;
+        width: 100%;
+      }
+      
+      /* Chrome モバイル用の追加スタイル */
+      @media screen and (max-width: 768px) {
+        html, body {
+          position: fixed;
+          width: 100%;
+          height: 100%;
+        }
+        
+        #root {
+          height: calc(var(--vh, 1vh) * 100);
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

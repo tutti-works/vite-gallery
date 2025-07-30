@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { multiplayerManager } from './MultiplayerManager';
+import { database } from './firebase';
+import { ref, onValue } from 'firebase/database';
 
 const DebugPanel = ({ enabled = true }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,13 +23,12 @@ const DebugPanel = ({ enabled = true }) => {
     if (!enabled || !isOpen) return;
 
     // Firebaseデータベースの監視（デバッグ用）
-    const { database } = require('./firebase');
-    const { ref, onValue } = require('firebase/database');
-    
     const playersRef = ref(database, 'players');
     const unsubscribe = onValue(playersRef, (snapshot) => {
       const data = snapshot.val() || {};
       setDatabaseSnapshot(data);
+    }, (error) => {
+      console.error('Error monitoring database:', error);
     });
 
     return () => unsubscribe();
@@ -125,7 +126,7 @@ const DebugPanel = ({ enabled = true }) => {
               • Each tab should have a unique Player ID<br/>
               • Opening a new tab should add exactly 1 player<br/>
               • Closing a tab should remove exactly 1 player<br/>
-              • Check Firebase Emulator UI at http://localhost:4000
+              • Check Firebase Console for production
             </div>
           </div>
         </div>

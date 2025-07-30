@@ -109,10 +109,6 @@ export const useMultiplayer = (enabled = true) => {
   useEffect(() => {
     const handleBeforeUnload = (e) => {
       if (connectionRef.current && multiplayerManager.playerRef) {
-        // 同期的にデータを削除しようとする
-        const { ref, remove } = require('firebase/database');
-        const playerRef = multiplayerManager.playerRef;
-        
         // sendBeacon APIを使用して非同期でクリーンアップを試みる
         if (navigator.sendBeacon && playerId) {
           const cleanupUrl = `/api/cleanup-player/${playerId}`;

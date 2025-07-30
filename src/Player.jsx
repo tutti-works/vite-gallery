@@ -3,6 +3,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { RigidBody, CapsuleCollider } from '@react-three/rapier';
 import * as THREE from 'three';
+import PlayerDebugHelper from './PlayerDebugHelper';
 
 // キャラクターコンポーネント
 const Character = forwardRef(({ animationState }, ref) => {
@@ -111,7 +112,10 @@ const Player = ({
   inputState, 
   cameraRef, 
   onPositionUpdate,
-  initialPosition = [0, 1, 0] 
+  initialPosition = [0, 1, 0],
+  isMultiplayer = false,
+  onMultiplayerUpdate,
+  playerId
 }) => {
   const rigidBodyRef = useRef();
   const playerRef = useRef();
@@ -130,6 +134,10 @@ const Player = ({
   const smoothPosition = useRef(new THREE.Vector3(...initialPosition));
   const positionBuffer = useRef([]);
   const POSITION_BUFFER_SIZE = 3;
+  
+  // マルチプレイヤー同期用
+  const lastSyncTime = useRef(0);
+  const SYNC_INTERVAL = 50; // 50ms = 20Hz
   
   // 設定
   const WALK_SPEED = 3;
@@ -158,6 +166,15 @@ const Player = ({
       
       // スムーズに補間
       smoothPosition.current.lerp(avg, POSITION_SMOOTHING);
+    }
+  };
+
+  // マルチプレイヤーの位置同期
+  const syncMultiplayerPosition = (position, rotation, animation) => {
+    const now = Date.now();
+    if (now - lastSyncTime.current >= SYNC_INTERVAL && onMultiplayerUpdate) {
+      onMultiplayerUpdate(position, rotation, animation);
+      lastSyncTime.current = now;
     }
   };
 
@@ -265,6 +282,15 @@ const Player = ({
       onPositionUpdate(smoothPosition.current);
     }
     
+    // マルチプレイヤー同期
+    if (isMultiplayer && onMultiplayerUpdate) {
+      syncMultiplayerPosition(
+        smoothPosition.current,
+        playerRef.current ? playerRef.current.quaternion : rotation.current,
+        newAnimationState
+      );
+    }
+    
     lastPosition.current.copy(newPosition);
   });
 
@@ -284,6 +310,9 @@ const Player = ({
         <React.Suspense fallback={<FallbackCharacter />}>
           <Character animationState={animationState} />
         </React.Suspense>
+        
+        {/* デバッグヘルパー */}
+        <PlayerDebugHelper playerId={playerId} isLocal={true} />
       </group>
     </RigidBody>
   );

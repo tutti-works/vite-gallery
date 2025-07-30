@@ -3,8 +3,11 @@ import { Canvas } from "@react-three/fiber";
 import { Sky, Environment } from "@react-three/drei";
 import { Physics, RigidBody } from "@react-three/rapier";
 import Player from './Player';
+import OtherPlayer from './OtherPlayer';
 import CameraController from './CameraController';
 import { useKeyboardInput, useMobileInput, VirtualJoystick } from './InputManager';
+import { useMultiplayer } from './useMultiplayer';
+import DebugPanel from './DebugPanel';
 
 // デバイス判定フック
 const useDeviceDetection = () => {
@@ -103,7 +106,7 @@ const Room = () => {
 };
 
 // デバッグ情報コンポーネント
-const DebugInfo = ({ inputState, playerPosition, isMobile }) => {
+const DebugInfo = ({ inputState, playerPosition, isMobile, isConnected, playerCount, playerId, debugInfo }) => {
   if (!isMobile) return null;
 
   return (
@@ -135,6 +138,42 @@ const DebugInfo = ({ inputState, playerPosition, isMobile }) => {
           <div>Z: {playerPosition.z?.toFixed(2)}</div>
         </div>
       )}
+      <div style={{ marginTop: '8px' }}>
+        <div>Multiplayer: {isConnected ? '✓' : '✗'}</div>
+        <div>Other Players: {playerCount}</div>
+        <div>My ID: {playerId ? playerId.substring(0, 10) + '...' : 'N/A'}</div>
+        {debugInfo && (
+          <>
+            <div>Has Listener: {debugInfo.hasListener ? '✓' : '✗'}</div>
+            <div>Has Ref: {debugInfo.hasPlayerRef ? '✓' : '✗'}</div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// マルチプレイヤー接続状態表示
+const MultiplayerStatus = ({ isConnected, playerCount, playerId }) => {
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '10px',
+      right: '10px',
+      backgroundColor: isConnected ? 'rgba(0, 200, 0, 0.8)' : 'rgba(200, 0, 0, 0.8)',
+      color: 'white',
+      padding: '10px 20px',
+      fontSize: '14px',
+      borderRadius: '5px',
+      zIndex: 500,
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      <div>{isConnected ? `Connected - ${playerCount + 1} players online` : 'Offline Mode'}</div>
+      {isConnected && playerId && (
+        <div style={{ fontSize: '12px', marginTop: '5px', opacity: 0.8 }}>
+          ID: {playerId.substring(0, 10)}...
+        </div>
+      )}
     </div>
   );
 };
@@ -145,6 +184,19 @@ export default function App() {
   const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
   const [playerPosition, setPlayerPosition] = useState(null);
   const cameraRef = useRef();
+  
+  // マルチプレイヤー設定
+  const [enableMultiplayer] = useState(true);
+  
+  // マルチプレイヤーフックを使用
+  const {
+    isConnected,
+    otherPlayers,
+    playerId,
+    updatePosition,
+    connectionError,
+    debugInfo
+  } = useMultiplayer(enableMultiplayer);
 
   // 入力管理
   const keyboardInput = useKeyboardInput();
@@ -265,17 +317,38 @@ export default function App() {
         
         <Physics 
           gravity={[0, -9.81, 0]} 
-          debug={true}
+          debug={false}
           timeStep={1/60}
           paused={false}
         >
           <Suspense fallback={null}>
+            {/* 自プレイヤーは常に1つだけ表示 */}
             <Player
               inputState={finalInputState || {}}
               cameraRef={cameraRef}
               onPositionUpdate={setPlayerPosition}
               initialPosition={[0, 1, 0]}
+              isMultiplayer={enableMultiplayer}
+              onMultiplayerUpdate={updatePosition}
+              playerId={playerId}
             />
+            
+            {/* 他のプレイヤーをレンダリング */}
+            {Object.entries(otherPlayers).map(([otherPlayerId, playerData]) => {
+              // 自分自身は描画しない（二重チェック）
+              if (otherPlayerId === playerId) {
+                console.warn('⚠️ Attempted to render self as other player:', otherPlayerId);
+                return null;
+              }
+              
+              return (
+                <OtherPlayer
+                  key={otherPlayerId}
+                  playerId={otherPlayerId}
+                  playerData={playerData}
+                />
+              );
+            })}
           </Suspense>
           
           <Room />
@@ -297,12 +370,46 @@ export default function App() {
         isMobile={isMobile}
       />
       
+      {/* マルチプレイヤー接続状態 */}
+      <MultiplayerStatus 
+        isConnected={isConnected}
+        playerCount={Object.keys(otherPlayers).length}
+        playerId={playerId}
+      />
+      
+      {/* 接続エラー表示 */}
+      {connectionError && (
+        <div style={{
+          position: 'fixed',
+          top: '60px',
+          right: '10px',
+          backgroundColor: 'rgba(200, 0, 0, 0.9)',
+          color: 'white',
+          padding: '10px 20px',
+          fontSize: '12px',
+          borderRadius: '5px',
+          zIndex: 500,
+          fontFamily: 'Arial, sans-serif',
+          maxWidth: '300px'
+        }}>
+          <strong>Connection Error:</strong><br />
+          {connectionError}
+        </div>
+      )}
+      
       {/* デバッグ情報 */}
       <DebugInfo 
         inputState={finalInputState || {}}
         playerPosition={playerPosition}
         isMobile={isMobile}
+        isConnected={isConnected}
+        playerCount={Object.keys(otherPlayers).length}
+        playerId={playerId}
+        debugInfo={debugInfo}
       />
+      
+      {/* デバッグパネル（PC版のみ） */}
+      {!isMobile && <DebugPanel enabled={true} />}
     </div>
   );
 }

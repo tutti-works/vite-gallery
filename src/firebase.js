@@ -11,11 +11,25 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:123456789:web:abcdef"
 };
 
-// 開発環境の場合、Emulator用の設定を追加
+// データベースURLの設定
 if (import.meta.env.DEV) {
-  // EmulatorのデータベースURLを明示的に設定
-  firebaseConfig.databaseURL = "http://192.168.50.59:9000?ns=demo-project";
+  // 開発環境：Emulator用のURL
+  firebaseConfig.databaseURL = "http://127.0.0.1:9000?ns=demo-project";
+} else {
+  // 本番環境：環境変数からデータベースURLを取得
+  // 重要：Firebase Realtime Databaseのリージョンに応じた正しいURLを設定する必要があります
+  firebaseConfig.databaseURL = import.meta.env.VITE_FIREBASE_DATABASE_URL || "https://demo-project.firebaseio.com";
+  
+  // エラーメッセージから、正しいURLは asia-southeast1 リージョンのものである必要があります
+  // Vercelの環境変数に以下のURLを設定してください：
+  // VITE_FIREBASE_DATABASE_URL=https://vite-gallery-backend-default-rtdb.asia-southeast1.firebasedatabase.app
 }
+
+console.log('🔥 Firebase Config:', {
+  projectId: firebaseConfig.projectId,
+  databaseURL: firebaseConfig.databaseURL,
+  environment: import.meta.env.DEV ? 'development' : 'production'
+});
 
 // Firebaseアプリの初期化
 const app = initializeApp(firebaseConfig);
@@ -29,9 +43,9 @@ if (import.meta.env.DEV) {
   if (!window.__firebaseEmulatorConnected) {
     try {
       // localhostではなく127.0.0.1を使用（Viteでの互換性向上）
-      connectDatabaseEmulator(database, '192.168.50.59', 9000);
+      connectDatabaseEmulator(database, '127.0.0.1', 9000);
       window.__firebaseEmulatorConnected = true;
-      console.log('✅ Connected to Firebase Emulator at 192.168.50.59:9000');
+      console.log('✅ Connected to Firebase Emulator at 127.0.0.1:9000');
     } catch (error) {
       // 既に接続されている場合のエラーは無視
       if (error.message.includes('already been called')) {
@@ -43,7 +57,7 @@ if (import.meta.env.DEV) {
     }
   }
 } else {
-  console.log('🌐 Using production Firebase');
+  console.log('🌐 Using production Firebase at:', firebaseConfig.databaseURL);
 }
 
 export { database };

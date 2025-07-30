@@ -1,5 +1,3 @@
-console.log("ビルド時に読み込まれたAPIキー:", import.meta.env.VITE_FIREBASE_API_KEY);
-
 import { initializeApp } from 'firebase/app';
 import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 
